@@ -16,7 +16,7 @@ class BillManager:
         # Thông tin nhà hàng
         tk.Label(
             invoice_window,
-            text="Nhà hàng THẮNG",
+            text="Nhà hàng kiểu Pháp",
             font=("Helvetica", 16, "bold"),
             bg="#f0f4f8",
             fg="#333333"

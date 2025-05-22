@@ -7,7 +7,7 @@ def connect_db():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="Thang@12345",
+            password="12345678",
             database="userdb"
         )
         if connection.is_connected():
@@ -61,3 +61,37 @@ def get_orders():
         if conn.is_connected():
             cursor.close()
             conn.close()
+def get_menu_items():
+    conn = connect_db()  # hoặc đường dẫn tới DB của bạn
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name, price, category FROM menu_items")
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    # Trả về list phân loại theo category
+    food_items = []
+    drink_items = []
+    for name, price, category in rows:
+        item = {"name": name, "price": price}
+        if category == "food":
+            food_items.append(item)
+        elif category == "drink":
+            drink_items.append(item)
+
+    return food_items, drink_items
+def get_items_by_category(category):
+    items = []
+    try:
+        conn = connect_db()
+        if conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT name, price FROM menu_items WHERE category = %s", (category,))
+            items = cursor.fetchall()
+    except Error as e:
+        print("Lỗi khi lấy dữ liệu:", e)
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+    return items
