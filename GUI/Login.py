@@ -4,6 +4,9 @@ from tkinter import messagebox
 import hashlib
 from DAO.DatabaseOperation import *
 from MenuApp import MenuApp
+from register import open_register_window
+from forget_password import open_forget_password_window
+from PIL import Image
 
 # === Hàm hash và kiểm tra đăng nhập ===
 def hash_password(password):
@@ -39,32 +42,45 @@ def handle_login(entry_username, entry_password, root):
     else:
         messagebox.showerror("Thất bại", "Sai tài khoản hoặc mật khẩu.")
 
+
+
 # === Cài đặt theme và giao diện ===
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("green")
 
 root = ctk.CTk()
 root.title("Phục Vụ Đăng Nhập")
-root.geometry("500x350")
+root.geometry("800x600")
 root.resizable(False, False)
 
-# === Frame trung tâm ===
-frame = ctk.CTkFrame(master=root, width=500, height=400, corner_radius=20)
-frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+# === Chia giao diện thành 2 nửa: trái và phải ===
+left_frame = ctk.CTkFrame(master=root, width=600, height=600, corner_radius=0)
+left_frame.pack(side="left", fill="both", expand=False)
 
-# === Các widget ===
-title = ctk.CTkLabel(frame, text="Đăng nhập", font=ctk.CTkFont(size=18, weight="bold"))
-title.pack(pady=(20, 10))
+right_frame = ctk.CTkFrame(master=root, width=200, height=600, corner_radius=0)
+right_frame.pack(side="right", fill="both", expand=False)
 
-entry_username = ctk.CTkEntry(frame, placeholder_text="Tên đăng nhập", width=200)
-entry_username.pack(padx = 10, pady=10)
+# === Ảnh hoặc nền bên trái ===
+image = ctk.CTkImage(light_image=Image.open("asset/Chilling.png"), size=(600, 600))
+image_label = ctk.CTkLabel(left_frame, image=image, text="")
+image_label.pack(expand=True, fill="both")
 
-entry_password = ctk.CTkEntry(frame, placeholder_text="Mật khẩu", show="*", width=200)
-entry_password.pack(padx = 10,pady=10)
+# === Form đăng nhập bên phải ===
+title = ctk.CTkLabel(right_frame, text="Đăng nhập", font=ctk.CTkFont(size=24, weight="bold"))
+title.pack(pady=(60, 30))
 
-login_button = ctk.CTkButton(frame, text="Đăng nhập", width=150,
-                                 command=lambda: handle_login(entry_username, entry_password, root))
-login_button.pack(pady=(15, 10))
+entry_username = ctk.CTkEntry(right_frame, placeholder_text="Tên đăng nhập", width=250)
+entry_username.pack(padx= 15,pady=10)
+
+entry_password = ctk.CTkEntry(right_frame, placeholder_text="Mật khẩu", show="*", width=250)
+entry_password.pack(padx= 15, pady=10)
+
+login_button = ctk.CTkButton(right_frame, text="Đăng nhập", width=200,
+                             command=lambda: handle_login(entry_username, entry_password, root))
+login_button.pack(padx=15, pady=(20, 10))
+
+ctk.CTkButton(right_frame, text="Đăng ký", command=open_register_window, width=200).pack(padx=15, pady=10)
+ctk.CTkButton(right_frame, text="Quên mật khẩu?", command=open_forget_password_window, width=200).pack(padx=15, pady=10)
 
 # === Chạy ứng dụng ===
 root.mainloop()

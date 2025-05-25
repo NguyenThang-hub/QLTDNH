@@ -2,9 +2,8 @@ import customtkinter as ctk
 from tkinter import messagebox
 from DAO.DatabaseOperation import *
 from Bill import BillManager
-from Report import show_monthly_report
 from Table import choose_table_window
-
+from AdminMode import AdminMode
 class MenuApp:
     def __init__(self, root, username):
         self.root = root
@@ -80,7 +79,6 @@ class MenuApp:
         btn_frame.pack(pady=20)
 
         ctk.CTkButton(btn_frame, text="✅ Xác nhận đơn", command=self.confirm_order, width=200).pack(pady=5)
-        ctk.CTkButton(btn_frame, text="📈 Báo cáo doanh thu", command=show_monthly_report, width=200).pack(pady=5)
 
     def confirm_order(self):
         order_items = []
@@ -127,4 +125,5 @@ class MenuApp:
         self.label_selected.configure(text=f"Bàn đã chọn: {table_number}")
 
     def admin_mode(self):
+        AdminMode()
         messagebox.showinfo("Quản lý", "Chuyển sang chế độ quản lý: thêm/sửa/xoá món ăn (chức năng chưa hoàn thiện).")
