@@ -109,24 +109,27 @@ def get_items_by_category(category):
             cursor.close()
             conn.close()
 
-def get_tables_by_area(area):
+    return items
+def execute_query_fetchall(query, params=None):
     conn = connect_db()
     if not conn:
         return []
     try:
-        cursor = conn.cursor(dictionary=True)
-        if area == "all":
-            query = "SELECT id, number, area FROM tables WHERE status = 'available'"
-            cursor.execute(query)
-        else:
-            query = "SELECT id, number, area FROM tables WHERE area = %s AND status = 'available'"
-            cursor.execute(query, (area,))
-        tables = cursor.fetchall()
-        return tables
+        cursor = conn.cursor()
+        cursor.execute(query, params if params else ())
+        results = cursor.fetchall()
+        return results
     except Error as e:
-        print(f"Error fetching tables: {e}")
+        print(f"Lỗi khi thực thi truy vấn: {e}")
         return []
     finally:
         if conn.is_connected():
             cursor.close()
+
             conn.close()
+
+
+def get_order_items():
+    query = "SELECT item_name, quantity FROM order_items"
+    return execute_query_fetchall(query)
+
