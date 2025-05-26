@@ -7,7 +7,7 @@ def connect_db():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="12345678",
+            password="Thang@12345",
             database="userdb"
         )
         if connection.is_connected():
@@ -19,7 +19,7 @@ def connect_db():
 def save_order(username, total_price, items, table_id):
     conn = connect_db()
     if not conn:
-        return None
+        return None  # Thay False bằng None để đồng nhất với logic trả về order_id
     try:
         cursor = conn.cursor()
         order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
