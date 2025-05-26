@@ -16,30 +16,24 @@ def connect_db():
         print(f"Error connecting to MySQL: {e}")
         return None
 
-def save_order(username, total_price, items, table_number):
+def save_order(username, total_price, items, table_id):
     conn = connect_db()
     if not conn:
-        return None
+        return None  # Thay False bằng None để đồng nhất với logic trả về order_id
     try:
         cursor = conn.cursor()
-        # Lưu đơn hàng (bao gồm table_number và order_date)
         order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute(
-            "INSERT INTO orders (username, total_price, table_number, order_date) VALUES (%s, %s, %s, %s)",
-            (username, total_price, table_number, order_date)
+            "INSERT INTO orders (username, total_price, order_date, table_id) VALUES (%s, %s, %s, %s)",
+            (username, total_price, order_date, table_id)
         )
         order_id = cursor.lastrowid
-        # Lưu chi tiết món
         for item in items:
             cursor.execute(
                 "INSERT INTO order_items (order_id, item_name, quantity, price) VALUES (%s, %s, %s, %s)",
                 (order_id, item["name"], item["quantity"], item["price"])
             )
-        # Cập nhật trạng thái bàn thành 'occupied'
-        cursor.execute(
-            "UPDATE tables SET status = 'occupied' WHERE number = %s",
-            (table_number,)
-        )
+        cursor.execute("UPDATE tables SET status = 'available' WHERE id = %s", (table_id,))
         conn.commit()
         return order_id
     except Error as e:
@@ -69,47 +63,35 @@ def get_orders():
 
 def get_menu_items():
     conn = connect_db()
-    if not conn:
-        return [], []
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT name, price, category FROM menu_items")
-        rows = cursor.fetchall()
-
-        food_items = []
-        drink_items = []
-        for item in rows:
-            if item["category"] == "food":
-                food_items.append({"name": item["name"], "price": item["price"]})
-            elif item["category"] == "drink":
-                drink_items.append({"name": item["name"], "price": item["price"]})
-        return food_items, drink_items
-    except Error as e:
-        print(f"Error retrieving menu items: {e}")
-        return [], []
-    finally:
-        if conn.is_connected():
-            cursor.close()
-            conn.close()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, price, category FROM menu_items")
+    rows = cursor.fetchall()
+    conn.close()
+    food_items = []
+    drink_items = []
+    for name, price, category in rows:
+        item = {"name": name, "price": price}
+        if category == "food":
+            food_items.append(item)
+        elif category == "drink":
+            drink_items.append(item)
+    return food_items, drink_items
 
 def get_items_by_category(category):
-    conn = connect_db()
-    if not conn:
-        return []
+    items = []
     try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT name, price FROM menu_items WHERE category = %s", (category,))
-        items = cursor.fetchall()
-        return items
+        conn = connect_db()
+        if conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT name, price FROM menu_items WHERE category = %s", (category,))
+            items = cursor.fetchall()
     except Error as e:
-        print(f"Error retrieving items: {e}")
-        return []
+        print("Lỗi khi lấy dữ liệu:", e)
     finally:
-        if conn.is_connected():
-            cursor.close()
+        if conn and conn.is_connected():
             conn.close()
-
     return items
+
 def execute_query_fetchall(query, params=None):
     conn = connect_db()
     if not conn:
@@ -125,11 +107,83 @@ def execute_query_fetchall(query, params=None):
     finally:
         if conn.is_connected():
             cursor.close()
-
             conn.close()
-
 
 def get_order_items():
     query = "SELECT item_name, quantity FROM order_items"
     return execute_query_fetchall(query)
 
+def get_all_tables():
+    query = "SELECT id, table_name, status FROM tables"
+    return execute_query_fetchall(query)
+
+def update_table_status(table_id, status):
+    conn = connect_db()
+    if not conn:
+        return False
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tables SET status = %s WHERE id = %s", (status, table_id))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Lỗi cập nhật trạng thái bàn: {e}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+def get_table_by_id(table_id):
+    query = "SELECT table_name, status FROM tables WHERE id = %s"
+    result = execute_query_fetchall(query, (table_id,))
+    return result[0] if result else None
+
+def add_menu_item(name, price, category):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO menu_items (name, price, category) VALUES (%s, %s, %s)",
+                       (name, price, category))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Lỗi thêm món: {e}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+def update_menu_item(item_id, name, price, category):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE menu_items SET name = %s, price = %s, category = %s WHERE id = %s",
+            (name, price, category, item_id)
+        )
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Lỗi cập nhật món: {e}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+def delete_menu_item(item_id):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM menu_items WHERE id = %s", (item_id,))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Lỗi xoá món: {e}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
