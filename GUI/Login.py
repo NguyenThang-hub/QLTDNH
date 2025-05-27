@@ -1,4 +1,6 @@
 import tkinter as tk
+
+
 import customtkinter as ctk
 from tkinter import messagebox
 import hashlib
@@ -7,6 +9,7 @@ from MenuApp import MenuApp
 from register import open_register_window
 from forget_password import open_forget_password_window
 from PIL import Image
+from MenuForGuest import MenuForGuest
 
 # === Hàm hash và kiểm tra đăng nhập ===
 def hash_password(password):
@@ -48,7 +51,7 @@ ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("green")
 
 root = ctk.CTk()
-root.title("Phục Vụ Đăng Nhập")
+root.title("Đăng Nhập")
 root.geometry("800x600")
 root.resizable(False, False)
 
@@ -82,6 +85,18 @@ login_button.pack(padx=15, pady=(20, 10))
 
 ctk.CTkButton(right_frame, text="Đăng ký", command=open_register_window, width=200).pack(padx=15, pady=10)
 ctk.CTkButton(right_frame, text="Quên mật khẩu?", command=open_forget_password_window, width=200).pack(padx=15, pady=10)
+
+# Khách hàng chọn món
+title = ctk.CTkLabel(right_frame, text="Bạn là khách hàng ?", font=ctk.CTkFont(size=18, weight="bold"))
+title.pack(pady=(20, 30))
+
+def open_guest_menu():
+    root.destroy()
+    guest_root = tk.Tk()
+    MenuForGuest(guest_root)
+    guest_root.mainloop()
+
+ctk.CTkButton(right_frame, text="GUEST", command=open_guest_menu, width=200, fg_color="red").pack(padx=15, pady=10)
 
 # === Chạy ứng dụng ===
 root.mainloop()

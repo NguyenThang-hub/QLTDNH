@@ -5,6 +5,7 @@ from Bill import BillManager
 from Table import choose_table_window
 from Admin import AdminMode
 
+
 class MenuApp:
     def __init__(self, root, username):
         self.root = root
@@ -190,4 +191,3 @@ class MenuApp:
         btn.pack(pady=20)
 
         mk.bind("<Return>", check_password)
-

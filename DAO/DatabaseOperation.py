@@ -7,7 +7,7 @@ def connect_db():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="12345678",
+            password="Thang@12345",
             database="userdb"
         )
         if connection.is_connected():
@@ -19,9 +19,14 @@ def connect_db():
 def save_order(username, total_price, items, table_id):
     conn = connect_db()
     if not conn:
-        return None  # Thay False bằng None để đồng nhất với logic trả về order_id
+        return None
     try:
         cursor = conn.cursor()
+        # Kiểm tra xem table_id có tồn tại trong bảng tables không
+        cursor.execute("SELECT id FROM tables WHERE id = %s", (table_id,))
+        if not cursor.fetchone():
+            print(f"Error: table_id {table_id} không tồn tại trong bảng tables")
+            return None
         order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute(
             "INSERT INTO orders (username, total_price, order_date, table_id) VALUES (%s, %s, %s, %s)",
@@ -63,19 +68,28 @@ def get_orders():
 
 def get_menu_items():
     conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT name, price, category FROM menu_items")
-    rows = cursor.fetchall()
-    conn.close()
-    food_items = []
-    drink_items = []
-    for name, price, category in rows:
-        item = {"name": name, "price": price}
-        if category == "food":
-            food_items.append(item)
-        elif category == "drink":
-            drink_items.append(item)
-    return food_items, drink_items
+    if not conn:
+        return [], []
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, price, category FROM menu_items")
+        rows = cursor.fetchall()
+        food_items = []
+        drink_items = []
+        for name, price, category in rows:
+            item = {"name": name, "price": price}
+            if category == "food":
+                food_items.append(item)
+            elif category == "drink":
+                drink_items.append(item)
+        return food_items, drink_items
+    except Error as e:
+        print(f"Lỗi khi lấy menu: {e}")
+        return [], []
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
 
 def get_items_by_category(category):
     items = []
@@ -113,8 +127,25 @@ def get_order_items():
     query = "SELECT item_name, quantity FROM order_items"
     return execute_query_fetchall(query)
 
+def get_table_status():
+    conn = connect_db()
+    if not conn:
+        return {}
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT table_number, status FROM tables")
+        tables = cursor.fetchall()
+        return {table[0]: table[1] for table in tables}
+    except Error as e:
+        print(f"Lỗi khi lấy trạng thái bàn: {e}")
+        return {}
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
 def get_all_tables():
-    query = "SELECT id, table_name, status FROM tables"
+    query = "SELECT id, name, status FROM tables"
     return execute_query_fetchall(query)
 
 def update_table_status(table_id, status):
@@ -135,12 +166,14 @@ def update_table_status(table_id, status):
             conn.close()
 
 def get_table_by_id(table_id):
-    query = "SELECT table_name, status FROM tables WHERE id = %s"
+    query = "SELECT name, status FROM tables WHERE id = %s"
     result = execute_query_fetchall(query, (table_id,))
     return result[0] if result else None
 
 def add_menu_item(name, price, category):
     conn = connect_db()
+    if not conn:
+        return False
     try:
         cursor = conn.cursor()
         cursor.execute("INSERT INTO menu_items (name, price, category) VALUES (%s, %s, %s)",
@@ -157,6 +190,8 @@ def add_menu_item(name, price, category):
 
 def update_menu_item(item_id, name, price, category):
     conn = connect_db()
+    if not conn:
+        return False
     try:
         cursor = conn.cursor()
         cursor.execute(
@@ -175,6 +210,8 @@ def update_menu_item(item_id, name, price, category):
 
 def delete_menu_item(item_id):
     conn = connect_db()
+    if not conn:
+        return False
     try:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM menu_items WHERE id = %s", (item_id,))
