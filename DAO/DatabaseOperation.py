@@ -7,7 +7,7 @@ def connect_db():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="Thang@12345",
+            password="12345678",
             database="userdb"
         )
         if connection.is_connected():
