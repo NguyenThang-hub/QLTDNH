@@ -43,7 +43,6 @@ def handle_login(entry_username, entry_password, root):
         messagebox.showerror("Thất bại", "Sai tài khoản hoặc mật khẩu.")
 
 
-
 # === Cài đặt theme và giao diện ===
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("green")
@@ -70,9 +69,11 @@ title = ctk.CTkLabel(right_frame, text="Đăng nhập", font=ctk.CTkFont(size=24
 title.pack(pady=(60, 30))
 
 entry_username = ctk.CTkEntry(right_frame, placeholder_text="Tên đăng nhập", width=250)
+entry_username.bind("<Return>", lambda event: entry_password.focus())
 entry_username.pack(padx= 15,pady=10)
 
 entry_password = ctk.CTkEntry(right_frame, placeholder_text="Mật khẩu", show="*", width=250)
+entry_password.bind("<Return>", lambda event: handle_login(entry_username, entry_password, root))
 entry_password.pack(padx= 15, pady=10)
 
 login_button = ctk.CTkButton(right_frame, text="Đăng nhập", width=200,

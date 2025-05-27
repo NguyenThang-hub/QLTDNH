@@ -174,14 +174,20 @@ class MenuApp:
 
         mk = ctk.CTkEntry(window, placeholder_text="Mật khẩu", width=250, show="*")
         mk.pack(padx=15, pady=10)
+        mk.focus()
 
-        def check_password():
+        error_label = ctk.CTkLabel(window, text="", text_color="red")
+        error_label.pack(pady=5)
+
+        def check_password(event=None):
             if mk.get() == "4321":
                 window.destroy()
-                AdminMode(refresh_menu_callback=self.load_menu_items)  # Gọi AdminMode và truyền callback
+                AdminMode(refresh_menu_callback=self.load_menu_items)
             else:
-                ctk.CTkLabel(window, text="Sai mật khẩu!", text_color="red").pack()
+                error_label.configure(text="Sai mật khẩu!")
 
         btn = ctk.CTkButton(window, text="Xác nhận", command=check_password)
         btn.pack(pady=20)
+
+        mk.bind("<Return>", check_password)
 
