@@ -109,24 +109,37 @@ class MenuApp:
             order_frame = ctk.CTkFrame(self.scrollable_frame, corner_radius=10)
             order_frame.pack(padx=10, pady=5, fill="x")
 
-            ctk.CTkLabel(order_frame, text=f"Bàn số: {order['table_id']}",
-                         font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", padx=10, pady=5)
+            table_number = order['table_id']  # bạn có thể đổi thành order['table_number'] nếu cột là table_number
+
+            ctk.CTkLabel(order_frame, text=f"Bàn số: {table_number}", font=ctk.CTkFont(size=16, weight="bold")).pack(
+                anchor="w", padx=10, pady=5)
 
             summary = "Món ăn:\n"
             total_price = 0
+            order_items = []
 
-            for item in order["items"]:
-                name = item["name"]
-                quantity = item["quantity"]
-                unit_price = item["price"]
-                price = quantity * unit_price
-                summary += f"{name}: {quantity} x {unit_price:,} = {price:,} VNĐ\n"
-                total_price += price
+            for item in order['items']:
+                name = item['name']
+                quantity = item['quantity']
+                price = item['price']
+                item_total = quantity * price
+
+                summary += f"{name}: {quantity} x {price:,} = {item_total:,} VNĐ\n"
+                total_price += item_total
+                order_items.append({"name": name, "quantity": quantity, "price": price})
 
             summary += f"\nTổng cộng: {total_price:,} VNĐ"
 
             ctk.CTkLabel(order_frame, text=summary, font=ctk.CTkFont(size=13), wraplength=600, justify="left").pack(
                 anchor="w", padx=10, pady=5)
+
+            ctk.CTkButton(
+                order_frame,
+                text="💵 Thanh toán",
+                command=lambda tn=table_number, s=summary, tp=total_price, oi=order_items:
+                self.pay_order_for_table(tn, s, tp, oi),
+                width=200
+            ).pack(pady=5, padx=10)
 
     def confirm_order(self):
         if not self.selected_table:
@@ -189,11 +202,11 @@ class MenuApp:
         if order_id:
             bill_window = BillManager(self.root)
             bill_window.show_invoice(summary, total_price, order_id, self.username)
-            del self.table_orders[table_number]
+            if table_number in self.table_orders:
+                del self.table_orders[table_number]
             self.show_orders()
         else:
             messagebox.showerror("Lỗi", "Không thể lưu đơn hàng.")
-
     def pay_order(self):
         if not self.selected_table or self.selected_table not in self.table_orders:
             messagebox.showwarning("Thông báo", "Không có đơn nào để thanh toán.")
