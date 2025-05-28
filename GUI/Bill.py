@@ -69,7 +69,7 @@ class BillManager:
 
         ttk.Label(
             details_frame,
-            text=f"Người dùng: {username}",
+            text=f"Nhân viên phục vụ: {username}",
             font=("Helvetica", 12),
             foreground="#333333",
             background="#ffffff"

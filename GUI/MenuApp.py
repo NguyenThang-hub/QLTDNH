@@ -97,65 +97,89 @@ class MenuApp:
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        ctk.CTkLabel(self.scrollable_frame, text="Danh sách đơn hàng", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=10)
+        ctk.CTkLabel(self.scrollable_frame, text="Danh sách đơn hàng", font=ctk.CTkFont(size=20, weight="bold")).pack(
+            pady=10)
 
-        if not self.table_orders:
+        orders = get_all_orders_with_items()
+        if not orders:
             ctk.CTkLabel(self.scrollable_frame, text="Chưa có đơn hàng nào.", font=ctk.CTkFont(size=14)).pack(pady=10)
             return
 
-        for table_number, order_data in self.table_orders.items():
+        for order in orders:
             order_frame = ctk.CTkFrame(self.scrollable_frame, corner_radius=10)
             order_frame.pack(padx=10, pady=5, fill="x")
 
-            ctk.CTkLabel(order_frame, text=f"Bàn số: {table_number}", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", padx=10, pady=5)
+            ctk.CTkLabel(order_frame, text=f"Bàn số: {order['table_id']}",
+                         font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", padx=10, pady=5)
 
             summary = "Món ăn:\n"
             total_price = 0
-            order_items = []
 
-            for item in self.food_items + self.drink_items:
-                name = item['name']
-                if name in order_data and order_data[name] > 0:
-                    quantity = order_data[name]
-                    price = quantity * item['price']
-                    summary += f"{name}: {quantity} x {item['price']:,} = {price:,} VNĐ\n"
-                    total_price += price
-                    order_items.append({"name": name, "quantity": quantity, "price": item['price']})
+            for item in order["items"]:
+                name = item["name"]
+                quantity = item["quantity"]
+                unit_price = item["price"]
+                price = quantity * unit_price
+                summary += f"{name}: {quantity} x {unit_price:,} = {price:,} VNĐ\n"
+                total_price += price
 
             summary += f"\nTổng cộng: {total_price:,} VNĐ"
 
-            ctk.CTkLabel(order_frame, text=summary, font=ctk.CTkFont(size=13), wraplength=600, justify="left").pack(anchor="w", padx=10, pady=5)
-
-            ctk.CTkButton(
-                order_frame,
-                text="💵 Thanh toán",
-                command=lambda tn=table_number, s=summary, tp=total_price, oi=order_items: self.pay_order_for_table(tn, s, tp, oi),
-                width=200
-            ).pack(pady=5, padx=10)
+            ctk.CTkLabel(order_frame, text=summary, font=ctk.CTkFont(size=13), wraplength=600, justify="left").pack(
+                anchor="w", padx=10, pady=5)
 
     def confirm_order(self):
         if not self.selected_table:
             messagebox.showwarning("Thông báo", "Vui lòng chọn bàn trước khi gọi món.")
             return
 
-        table_data = {}
+        table_data = []
         has_order = False
+        total_price = 0
 
+        # Gom món ăn
         for item in self.food_items:
-            quantity = int(self.food_quantities[item['name']].get())
+            name = item['name']
+            price = item['price']
+            quantity = int(self.food_quantities[name].get())
             if quantity > 0:
-                table_data[item['name']] = quantity
+                table_data.append({
+                    "name": name,
+                    "quantity": quantity,
+                    "price": price
+                })
+                total_price += price * quantity
                 has_order = True
 
+        # Gom thức uống
         for item in self.drink_items:
-            quantity = int(self.drink_quantities[item['name']].get())
+            name = item['name']
+            price = item['price']
+            quantity = int(self.drink_quantities[name].get())
             if quantity > 0:
-                table_data[item['name']] = quantity
+                table_data.append({
+                    "name": name,
+                    "quantity": quantity,
+                    "price": price
+                })
+                total_price += price * quantity
                 has_order = True
 
         if not has_order:
             messagebox.showwarning("Thông báo", "Vui lòng chọn ít nhất một món.")
             return
+
+        # Lưu đơn vào database (gọi DAO)
+        username = "guest"  # Hoặc lấy username từ phiên đăng nhập nếu có
+        table_id = self.selected_table
+
+        order_id = save_order(username, total_price, table_data, table_id)
+
+        if order_id:
+            messagebox.showinfo("Xác nhận đơn",
+                                f"Đơn hàng cho bàn {table_id} đã được lưu thành công (Mã đơn: {order_id}).")
+        else:
+            messagebox.showerror("Lỗi", "Không thể lưu đơn hàng. Vui lòng thử lại.")
 
         self.table_orders[self.selected_table] = table_data
         messagebox.showinfo("Xác nhận đơn", f"Đơn hàng cho bàn {self.selected_table} đã được lưu tạm.")

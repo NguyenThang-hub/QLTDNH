@@ -2,10 +2,9 @@ import customtkinter as ctk
 from tkinter import messagebox
 from DAO.DatabaseOperation import *
 from Table import choose_table_window
-import tkinter as tk
-from PIL import Image
-from MenuApp import MenuApp
 import hashlib
+import os
+import sys
 
 class MenuForGuest:
     def __init__(self, root, username="Guest"):
@@ -191,49 +190,5 @@ def check_credentials(username, password):
     return None
 
 def open_simple_login_window(root):
-    root.title("Đăng Nhập")
-    root.geometry("800x600")
-    root.resizable(False, False)
-
-    ctk.set_appearance_mode("light")
-    ctk.set_default_color_theme("green")
-
-    left_frame = ctk.CTkFrame(master=root, width=600, height=600, corner_radius=0)
-    left_frame.pack(side="left", fill="both", expand=False)
-
-    right_frame = ctk.CTkFrame(master=root, width=200, height=600, corner_radius=0)
-    right_frame.pack(side="right", fill="both", expand=False)
-
-    image = ctk.CTkImage(light_image=Image.open("asset/Chilling.png"), size=(600, 600))
-    image_label = ctk.CTkLabel(left_frame, image=image, text="")
-    image_label.pack(expand=True, fill="both")
-
-    title = ctk.CTkLabel(right_frame, text="Đăng nhập", font=ctk.CTkFont(size=24, weight="bold"))
-    title.pack(pady=(60, 30))
-
-    entry_username = ctk.CTkEntry(right_frame, placeholder_text="Tên đăng nhập", width=250)
-    entry_username.bind("<Return>", lambda event: entry_password.focus())
-    entry_username.pack(padx=15, pady=10)
-
-    entry_password = ctk.CTkEntry(right_frame, placeholder_text="Mật khẩu", show="*", width=250)
-    entry_password.bind("<Return>", lambda event: handle_login(entry_username, entry_password, root))
-    entry_password.pack(padx=15, pady=10)
-
-    login_button = ctk.CTkButton(right_frame, text="Đăng nhập", width=200,
-                                 command=lambda: handle_login(entry_username, entry_password, root))
-    login_button.pack(padx=15, pady=(20, 10))
-
-def handle_login(entry_username, entry_password, root):
-    username = entry_username.get().strip()
-    password = entry_password.get()
-    if not username or not password:
-        messagebox.showwarning("Thông báo", "Vui lòng nhập đầy đủ thông tin.")
-        return
-    if check_credentials(username, password):
-        messagebox.showinfo("Thành công", "Đăng nhập thành công!")
-        root.destroy()
-        menu_root = tk.Tk()
-        MenuApp(menu_root, username)
-        menu_root.mainloop()
-    else:
-        messagebox.showerror("Thất bại", "Sai tài khoản hoặc mật khẩu.")
+    root.destroy()
+    os.system(f"{sys.executable} Login.py")
