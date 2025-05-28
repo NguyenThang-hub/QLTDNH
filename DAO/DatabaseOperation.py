@@ -7,7 +7,7 @@ def connect_db():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="Thang@12345",
+            password="12345678",
             database="userdb"
         )
         if connection.is_connected():
@@ -248,6 +248,74 @@ def delete_menu_item(item_id):
     except Error as e:
         print(f"Lỗi xoá món: {e}")
         return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+def insert_order(table_id, items_dict):
+    conn = connect_db()
+    if not conn:
+        return None
+    try:
+        cursor = conn.cursor()
+
+        # MySQL dùng %s thay vì ?
+        cursor.execute("INSERT INTO orders (table_id, order_date) VALUES (%s, NOW())", (table_id,))
+        order_id = cursor.lastrowid
+
+        for item_name, quantity in items_dict.items():
+            cursor.execute(
+                "INSERT INTO order_items (order_id, item_name, quantity) VALUES (%s, %s, %s)",
+                (order_id, item_name, quantity)
+            )
+
+        conn.commit()
+        return order_id
+    except Error as e:
+        print(f"Lỗi insert_order: {e}")
+        return None
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+def get_all_orders_with_items():
+    conn = connect_db()
+    if not conn:
+        return []
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT o.id AS order_id, o.table_id, o.total_price, o.order_date, 
+                   oi.item_name, oi.quantity, oi.price 
+            FROM orders o 
+            JOIN order_items oi ON o.id = oi.order_id
+            ORDER BY o.order_date DESC
+        """)
+        rows = cursor.fetchall()
+
+        # Gom đơn hàng theo order_id
+        orders = {}
+        for row in rows:
+            oid = row['order_id']
+            if oid not in orders:
+                orders[oid] = {
+                    "table_id": row['table_id'],
+                    "total_price": row['total_price'],
+                    "order_date": row['order_date'],
+                    "items": []
+                }
+            orders[oid]["items"].append({
+                "name": row["item_name"],
+                "quantity": row["quantity"],
+                "price": row["price"]
+            })
+        return orders.values()
+    except Error as e:
+        print("Lỗi lấy đơn hàng:", e)
+        return []
     finally:
         if conn.is_connected():
             cursor.close()
