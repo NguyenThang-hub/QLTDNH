@@ -1,6 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import messagebox, Tk
 import hashlib
 from DAO.DatabaseOperation import *
 from MenuApp import MenuApp
@@ -8,6 +8,7 @@ from register import open_register_window
 from forget_password import open_forget_password_window
 from PIL import Image
 from MenuForGuest import MenuForGuest
+from MenuForChef import MenuChef
 
 # === Hàm hash và kiểm tra đăng nhập ===
 def hash_password(password):
@@ -31,9 +32,21 @@ def check_credentials(username, password):
 def handle_login(entry_username, entry_password, root):
     username = entry_username.get().strip()
     password = entry_password.get()
+
     if not username or not password:
         messagebox.showwarning("Thông báo", "Vui lòng nhập đầy đủ thông tin.")
         return
+
+    # Trường hợp đặc biệt: tài khoản "DB", mật khẩu "123" (không cần DB)
+    if username.lower() == "db" and password == "123":
+        messagebox.showinfo("Thành công", "Đăng nhập đầu bếp (DB) thành công!")
+        root.destroy()
+        chef_root = tk.Tk()
+        MenuChef(chef_root, username)
+        chef_root.mainloop()
+        return
+
+    # Các tài khoản khác -> kiểm tra từ CSDL
     if check_credentials(username, password):
         messagebox.showinfo("Thành công", "Đăng nhập thành công!")
         root.destroy()
@@ -90,7 +103,7 @@ title.pack(pady=(20, 30))
 
 def open_guest_menu():
     root.destroy()
-    guest_root = tk.Tk()
+    guest_root: Tk = tk.Tk()
     MenuForGuest(guest_root)
     guest_root.mainloop()
 
