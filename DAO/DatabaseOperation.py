@@ -16,16 +16,34 @@ def connect_db():
         print(f"Error connecting to MySQL: {e}")
         return None
 
+def reset_table_status():
+    conn = connect_db()
+    if not conn:
+        print("Cannot connect to database to reset table status.")
+        return False
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tables SET status = 'available'")
+        conn.commit()
+        print("All tables reset to 'available'.")
+        return True
+    except Error as e:
+        print(f"Error resetting table status: {e}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
 def save_order(username, total_price, items, table_id):
     conn = connect_db()
     if not conn:
         return None
     try:
         cursor = conn.cursor()
-        # Kiểm tra xem table_id có tồn tại trong bảng tables không
-        cursor.execute("SELECT id FROM tables WHERE id = %s", (table_id,))
+        cursor.execute("SELECT id FROM tables WHERE table_number = %s", (table_id,))
         if not cursor.fetchone():
-            print(f"Error: table_id {table_id} không tồn tại trong bảng tables")
+            print(f"Error: table_number {table_id} không tồn tại trong bảng tables")
             return None
         order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute(
@@ -38,7 +56,6 @@ def save_order(username, total_price, items, table_id):
                 "INSERT INTO order_items (order_id, item_name, quantity, price) VALUES (%s, %s, %s, %s)",
                 (order_id, item["name"], item["quantity"], item["price"])
             )
-        cursor.execute("UPDATE tables SET status = 'available' WHERE id = %s", (table_id,))
         conn.commit()
         return order_id
     except Error as e:
@@ -49,6 +66,39 @@ def save_order(username, total_price, items, table_id):
             cursor.close()
             conn.close()
 
+def get_table_by_id(table_id):
+    try:
+        conn = connect_db()
+        if conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT table_number, status FROM tables WHERE table_number = %s", (table_id,))
+            result = cursor.fetchone()
+            return result
+    except Error as e:
+        print(f"Error fetching table: {e}")
+        return None
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+
+def update_table_status(table_id, status):
+    conn = connect_db()
+    if not conn:
+        return False
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tables SET status = %s WHERE table_number = %s", (status, table_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except Error as e:
+        print(f"Lỗi cập nhật trạng thái bàn: {e}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+# Các hàm khác giữ nguyên
 def get_orders():
     conn = connect_db()
     if not conn:
@@ -147,28 +197,6 @@ def get_table_status():
 def get_all_tables():
     query = "SELECT id, name, status FROM tables"
     return execute_query_fetchall(query)
-
-def update_table_status(table_id, status):
-    conn = connect_db()
-    if not conn:
-        return False
-    try:
-        cursor = conn.cursor()
-        cursor.execute("UPDATE tables SET status = %s WHERE id = %s", (status, table_id))
-        conn.commit()
-        return True
-    except Error as e:
-        print(f"Lỗi cập nhật trạng thái bàn: {e}")
-        return False
-    finally:
-        if conn.is_connected():
-            cursor.close()
-            conn.close()
-
-def get_table_by_id(table_id):
-    query = "SELECT name, status FROM tables WHERE id = %s"
-    result = execute_query_fetchall(query, (table_id,))
-    return result[0] if result else None
 
 def add_menu_item(name, price, category):
     conn = connect_db()
